@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Fb ads - higlight
+// @name         xFbxadsx
 // @namespace    http://tampermonkey.net/
 // @version      0.1
 // @description  try to take over the world!
@@ -8,59 +8,38 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
-    'use strict';
+function debug(msg) {
+    console.log(msg);
+}
 
-})();
-
-function findPos(obj) {
-    var curtop = 0;
-    if (obj.offsetParent) {
-        do {
-            curtop += obj.offsetTop;
-        } while (obj = obj.offsetParent);
-    return [curtop];
+function checkSponsored() {
+    if ('Sponsored' == jQuery(this).text()) {
+        debug('hide ad');
+        jQuery(this).parents('div[role=article]').remove();
     }
 }
 
-window.scrolled = false;
-
-window.highlightAds = function() {
-    var ads = document.evaluate('//div[@id="contentArea"]//a[text()="Sponsored"]/ancestor::div[@role="article"]', document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-    var count = 0;
-    for (var i=0; i<ads.snapshotLength; i++) {
-		var next = ads.snapshotItem(i);
-        next.style.border = "10px solid red";
-
-        var buttons = next.querySelectorAll('a[ajaxify]');
-        var hasUndo = false;
-        for (var y=0; y<buttons.length; y++) {
-            var undo = buttons[y];
-            if(buttons[y].innerText == 'Undo') {
-                hasUndo = true;
-                break;
-            }
-        }
-
-        if (hasUndo) {
-            next.style.border = "0px";
-            if (scrolled === next) {
-                scrolled = false;
-            }
-        } else {
-            count++;
-            if (scrolled === false || scrolled == next) {
-                var pos = findPos(next);
-                if (pos !== undefined) {
-                    window.scroll(0,findPos(next)-200);
-                    scrolled = next;
-                }
-            }
-        }
-	}
-    console.log("found", count, "ads");
+function findAds() {
+    debug('find ads');
+    jQuery('div[role=article] a[href="#"]').each(checkSponsored);
 }
 
-setInterval(function() {
-    highlightAds();
-}, 2000);
+var timer;
+function init() {
+    if (timer) {
+        clearInterval(timer);
+    }
+    timer = setInterval(findAds, 200);
+}
+
+var jqcheck;
+jqcheck = setInterval(function() {
+    if (window.jQuery !== undefined) {
+        clearInterval(jqcheck);
+        init();
+        jQuery(document).click(function() {
+            debug('init');
+            init();
+        });
+    }
+}, 200);
